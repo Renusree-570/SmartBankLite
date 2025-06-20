@@ -1,6 +1,3 @@
-Sure! Here's the improved `README.md` in Markdown format. You can copy and paste this directly into your GitHub repository's `README.md` file:
-
-````markdown
 # 💼 SmartBankLite – Core Banking Backend System
 
 **SmartBankLite** is a lightweight backend application that simulates the core functionalities of a digital banking system. It handles operations such as customer management, account creation, fixed deposits, fund transfers, and transaction tracking – built with clean architecture and real-world logic.
