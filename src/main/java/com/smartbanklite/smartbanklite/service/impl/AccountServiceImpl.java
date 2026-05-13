@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -21,65 +20,25 @@ public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final CustomerRepository customerRepository;
 
-    public Optional<Account> createAccount(Long CustomerId,Account account)
-    {
-        try
-        {
-            Optional<Customer> customer=customerRepository.findById(CustomerId);
-            if(customer.isPresent())
-            {
-                account.setCustomer(customer.get());
-                account.setBalance(account.getBalance()!=null?account.getBalance():0.0);
-                return Optional.of(accountRepository.save(account));
-            }
-            else {
-                throw new BankException("Customer is not fount with CustomerId: "+CustomerId);
-            }
-        }
-        catch (BankException e)
-        {
-            log.error("Error: ",e);
-            throw e;
-        }
+    public Account createAccount(Long customerId, Account account) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new BankException("Customer not found with id: " + customerId));
+        account.setCustomer(customer);
+        account.setBalance(account.getBalance() != null ? account.getBalance() : 0.0);
+        return accountRepository.save(account);
     }
-    public Optional<Account> getAccountByAccountId(Long accountId)
-    {
-        try
-        {
-            Optional<Account> account=accountRepository.findById(accountId);
-            if(account.isPresent())
-            {
-                return account;
-            }
-            else
-            {
-                throw new BankException("Can't find Account with AccoundId: "+account);
-            }
-        }
-        catch (BankException e)
-        {
-            log.error("Error: ",e);
-            throw e;
-        }
+
+    public Account getAccountByAccountId(Long accountId) {
+        return accountRepository.findById(accountId)
+                .orElseThrow(() -> new BankException("Account not found with id: " + accountId));
     }
-    public Optional<List<Account>> getAccountByCustomerId(Long customerId)
-    {
-        try
-        {
-            Optional<List<Account>> accounts=accountRepository.findByCustomerId(customerId);
-            if(!accounts.get().isEmpty())
-            {
-                return accounts;
-            }
-            else
-            {
-                throw new BankException("No accounts are assosiated with CustomerId: "+customerId);
-            }
+
+    public List<Account> getAccountByCustomerId(Long customerId) {
+        List<Account> accounts = accountRepository.findByCustomerId(customerId)
+                .orElseThrow(() -> new BankException("No accounts found for customer id: " + customerId));
+        if (accounts.isEmpty()) {
+            throw new BankException("No accounts associated with customer id: " + customerId);
         }
-        catch (BankException e)
-        {
-            log.error("Error: ",e);
-            throw  e;
-        }
+        return accounts;
     }
 }

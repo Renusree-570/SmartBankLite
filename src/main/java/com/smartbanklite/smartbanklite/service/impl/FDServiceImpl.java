@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+
 @Slf4j
 @Service
 @AllArgsConstructor
@@ -21,71 +21,29 @@ public class FDServiceImpl implements FDService {
     private final CustomerRepository customerRepository;
     private final FDRepository fdRepository;
 
-    public Optional<FDAccount> createFDAccount(Long customerId, FDAccount fdAccount)
-    {
-        try
-        {
-            Optional<Customer> customer=customerRepository.findById(customerId);
-            if(customer.isPresent())
-            {
-                fdAccount.setCustomer(customer.get());
-                fdAccount.setStartDate(LocalDate.now());
-                fdAccount.setMaturityDate(LocalDate.now().plusMonths(fdAccount.getTenureMonths()));
-                double maturityAmount=fdAccount.getPrincipalAmount()+(fdAccount.getPrincipalAmount()*(fdAccount.getInterestRate()/100)*(fdAccount.getTenureMonths()/12.0));
-                fdAccount.setMaturityAmount(maturityAmount);
-
-                return Optional.of(fdRepository.save(fdAccount));
-            }
-            else {
-                throw new BankException("Customer with customerId: "+customerId+" is not present.");
-            }
-        }
-        catch (BankException e)
-        {
-            log.error("Error: ",e);
-            throw e;
-        }
+    public FDAccount createFDAccount(Long customerId, FDAccount fdAccount) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new BankException("Customer not found with id: " + customerId));
+        fdAccount.setCustomer(customer);
+        fdAccount.setStartDate(LocalDate.now());
+        fdAccount.setMaturityDate(LocalDate.now().plusMonths(fdAccount.getTenureMonths()));
+        double maturityAmount = fdAccount.getPrincipalAmount()
+                + (fdAccount.getPrincipalAmount() * (fdAccount.getInterestRate() / 100) * (fdAccount.getTenureMonths() / 12.0));
+        fdAccount.setMaturityAmount(maturityAmount);
+        return fdRepository.save(fdAccount);
     }
 
-    public Optional<FDAccount> getFDAccountByFDId(Long fdId)
-    {
-        try
-        {
-            Optional<FDAccount> fdAccount=fdRepository.findById(fdId);
-            if(fdAccount.isPresent())
-            {
-                return fdAccount;
-            }
-            else
-            {
-                throw new BankException("Can't find the fdAccount with fdId: "+fdId);
-            }
-        }
-        catch(BankException e)
-        {
-            log.error("Error: ",e);
-            throw e;
-        }
+    public FDAccount getFDAccountByFDId(Long fdId) {
+        return fdRepository.findById(fdId)
+                .orElseThrow(() -> new BankException("FD Account not found with id: " + fdId));
     }
 
-    public Optional<List<FDAccount>> getFDAccountByCustomerId(Long customerId)
-    {
-        try
-        {
-            Optional<List<FDAccount>> fdAccounts=fdRepository.findByCustomerId(customerId);
-            if(!fdAccounts.get().isEmpty())
-            {
-                return fdAccounts;
-            }
-            else
-            {
-                throw new BankException("No FDAccounts associated with this customerId: "+customerId);
-            }
+    public List<FDAccount> getFDAccountByCustomerId(Long customerId) {
+        List<FDAccount> fdAccounts = fdRepository.findByCustomerId(customerId)
+                .orElseThrow(() -> new BankException("No FD accounts found for customer id: " + customerId));
+        if (fdAccounts.isEmpty()) {
+            throw new BankException("No FD accounts associated with customer id: " + customerId);
         }
-        catch (BankException e)
-        {
-            log.error("Error: ",e);
-            throw e;
-        }
+        return fdAccounts;
     }
 }
